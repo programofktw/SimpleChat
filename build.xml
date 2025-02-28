@@ -23,7 +23,7 @@
     <!-- =================================================================
         TARGET ALL 
     =================================================================== -->
-    <target name="all" depends="clean, server, client, jar-server, jar-client, run-server, run-client" />
+    <target name="all" depends="clean, server, client, server-jar, client-jar, run-server, run-client" />
 
     <path id="base.path">
         <fileset dir="${lib.dir}">
@@ -47,20 +47,21 @@
 			<mkdir dir="${output.dir.classes}/server" />
 	</target>
 
-    <target name="server" depends="init">
+    <target name="server" depends="init,common">
 	    <delete dir="${lib.dir}/server.jar"/>
 		<delete dir="${output.dir.classes}/server" >
                 <include name="**/*"/>
                 <include name="**/*.class"/>
         </delete>
+
         <javac srcdir="${src.server}" debug="on" deprecation="on"
                destdir="${output.dir.classes}" 
                classpathref="base.path">
             <include name="**/*.java" />
         </javac>
-        <jar destfile="${lib.dir}/server.jar" 
-		   basedir="${output.dir.classes}">
-		   <include name="server/*.class" />
+		<jar destfile="${lib.dir}/server.jar"> 
+		   <fileset dir="${output.dir.classes}/common" />
+		   <fileset dir="${output.dir.classes}/server" />
 		</jar>
     </target>
 
@@ -100,8 +101,8 @@
         TARGET CLEAN 
     =================================================================== -->
     <target name="clean">
-        <delete file="${lib.dir}/client.jar"/>
-        <delete file="${lib.dir}/server.jar"/>
+        <delete dir="${lib.dir}/server.jar"/>
+        <delete dir="${lib.dir}/client.jar"/>
         <delete dir="${output.dir.classes}" >
                 <include name="**/*"/>
                 <include name="**/*.class"/>
@@ -118,18 +119,15 @@
         TARGET JAR 
     =================================================================== -->
 
-    <target name="jar-server" depends="server">
-
-		<copy file="logback.xml" todir="${output.dir.classes}" />
-
+    <target name="server-jar" depends="server">
         <jar destfile="${lib.dir}/server.jar" 
 			basedir="${output.dir.classes}">
-			<include name="logback.xml" />
+			<include name="common/*.class" />
 			<include name="server/*.class" />
 		</jar>
     </target>
 
-    <target name="jar-client" depends="client">
+    <target name="client-jar" depends="client">
 	    <jar destfile="${lib.dir}/client.jar"
 			basedir="${output.dir.classes}">
 			<include name="common/*.class" />
@@ -141,33 +139,34 @@
     <!-- =================================================================
         RUN 
     =================================================================== -->
-    <target name="run-server" depends="jar-server">
-		<java classname="server.EchoServer" fork="yes">
+    <target name="run-server" depends="server-jar">
+		<java classname="server.ServerConsole" fork="yes">
 			<classpath>
 				<pathelement path="${classpath}"/>
 				<pathelement location="${lib.dir}/ocsf.jar"/>
 				<pathelement location="${lib.dir}/server.jar"/>
-				<pathelement location="${lib.dir}/logback-classic-1.2.3.jar"/>
-				<pathelement location="${lib.dir}/logback-core-1.2.3.jar"/>
-				<pathelement location="${lib.dir}/slf4j-api-1.7.9.jar"/>
 			</classpath>
 		</java>
     </target>
 
-    <target name="run-client" depends="jar-client">
+    <target name="run-client" depends="client-jar">
 		<java classname="client.ClientConsole" fork="yes">
 			<classpath>
 				<pathelement path="${classpath}"/>
 				<pathelement location="${lib.dir}/ocsf.jar"/>
 				<pathelement location="${lib.dir}/client.jar"/>
 			</classpath>
-			<arg value="${arg}"/>
+			<arg value="${arg1}"/>
+            <arg value="${arg2}"/>
+			<!--
+			<arg value="192.168.56.1"/>
+			-->
 		</java>
     </target>
     <!-- =================================================================
         TARGET DOC 
     =================================================================== -->
-    <target name="doc" depends="jar-server,jar-client">
+    <target name="doc" depends="server-jar,client-jar">
             <mkdir dir="${doc.dir}"/>
             <javadoc packagenames="${build.packages}"
                      sourcepath="${build.src}"

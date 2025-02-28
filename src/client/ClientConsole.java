@@ -9,15 +9,8 @@ public class ClientConsole implements ChatIF{
 
     ChatClient client;
 
-    public ClientConsole(String host, int port){
-        try{
-            client = new ChatClient(host, port, this);
-        }catch(IOException e){
-            System.out.println("host = "+ host+ " port = " + port);
-            System.out.println("Error : Can't setup connection! Termination client.");
-            System.exit(1);
-        }
-
+    public ClientConsole(String host, int port, String login){
+        client = new ChatClient(host, port, login,this);
     }
 
     public void accept()
@@ -26,11 +19,13 @@ public class ClientConsole implements ChatIF{
             BufferedReader fromConsole = new BufferedReader(new InputStreamReader(System.in));
 
             String message;
-
-            while(true){
-                message = fromConsole.readLine();
-                client.handleMessageFromClientUI(message);
-            }
+            try{
+                while(true){    
+                    message = fromConsole.readLine();
+                    client.handleMessageFromClientUI(message);
+                }
+            }catch(NullPointerException e){ }
+            
         } catch(Exception ex){
             System.out.println("Unexpected error while reading form console!");
         }
@@ -38,21 +33,35 @@ public class ClientConsole implements ChatIF{
 
 
     public void display(String message){
-        System.out.println("> "+message);
+        System.out.println(message);
     }
 
     public static void main(String[] args){
         String host = "";
         int port = 0;
-
+        String loginID = null;
         try{
-            host = "localhost";
+            loginID = args[0];
+            // host = "localhost";
             // host = args[0];
         } catch(ArrayIndexOutOfBoundsException e){
+            System.out.println("ERROR - No login ID specified. Connection abort.");
+            System.exit(1);
+        }
+
+        try{
+            host=args[1];
+        }catch(ArrayIndexOutOfBoundsException e){
             host = "localhost";
         }
 
-        ClientConsole chat = new ClientConsole(host, DEFAULT_PORT);
+        try{
+            port = Integer.parseInt(args[2]);
+        }catch(Throwable t){
+            port = DEFAULT_PORT;
+        }
+
+        ClientConsole chat = new ClientConsole(host, DEFAULT_PORT, loginID);
         chat.accept();
     }
 }
