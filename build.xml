@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="simplechat" default="all" basedir="." >
+
+    <!-- =================================================================
+     Property
+    =================================================================== -->
+    <property environment="env"/>
+    <property name="__Name__"       value="simplechat"/>
+    <property name="build.packages" value="kgu.*"/>
+    <property name="build.compiler" value="modern"/>
+    <property name="build.src"      value="src" />
+	<property name="src.server"  value="${build.src}/server" /> 
+	<property name="src.client"  value="${build.src}/client" /> 
+	<property name="src.common"  value="${build.src}/common" /> 
+    <property name="build.dir"      value="build"/>
+    <property name="output.dir"     value="${build.dir}"/>
+    <property name="output.dir.classes"  value="${output.dir}/classes" />
+    <property name="doc.dir"             value="docs" />
+    <property name="lib.dir"             value="lib" />
+    <property name="classpath"           value="${env.CLASSPATH}" />
+    
+    <!-- =================================================================
+        TARGET ALL 
+    =================================================================== -->
+    <target name="all" depends="clean, server, client, jar-server, jar-client, run-server, run-client" />
+
+    <path id="base.path">
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+            <include name="*.zip"/>
+        </fileset>
+        <pathelement location="${lib.dir}/*.jar"/>
+        <pathelement location="${lib.dir}/classes/*.class"/>
+    </path>
+
+    <!-- =================================================================
+        TARGET BUILD SIMPLECHAT
+    =================================================================== -->
+
+	<target name="init" >
+		<echo>build-init</echo>
+			<delete dir="${output.dir.classes}" />
+			<mkdir dir="${output.dir.classes}" />
+			<mkdir dir="${output.dir.classes}/common" />
+			<mkdir dir="${output.dir.classes}/client" />
+			<mkdir dir="${output.dir.classes}/server" />
+	</target>
+
+    <target name="server" depends="init">
+	    <delete dir="${lib.dir}/server.jar"/>
+		<delete dir="${output.dir.classes}/server" >
+                <include name="**/*"/>
+                <include name="**/*.class"/>
+        </delete>
+        <javac srcdir="${src.server}" debug="on" deprecation="on"
+               destdir="${output.dir.classes}" 
+               classpathref="base.path">
+            <include name="**/*.java" />
+        </javac>
+        <jar destfile="${lib.dir}/server.jar" 
+		   basedir="${output.dir.classes}">
+		   <include name="server/*.class" />
+		</jar>
+    </target>
+
+
+    <target name="common" depends="init">
+		<delete dir="${output.dir.classes}/common" >
+                <include name="**/*"/>
+                <include name="**/*.class"/>
+        </delete>
+
+        <javac srcdir="${src.common}" debug="on" deprecation="on"
+               destdir="${output.dir.classes}" 
+               classpathref="base.path">
+            <include name="**/*.java" />
+        </javac>
+    </target>
+
+    <target name="client" depends="init,common">
+	    <delete dir="${lib.dir}/client.jar"/>
+		<delete dir="${output.dir.classes}/client" >
+                <include name="**/*"/>
+                <include name="**/*.class"/>
+        </delete>
+
+        <javac srcdir="${src.client}" debug="on" deprecation="on"
+               destdir="${output.dir.classes}" 
+               classpathref="base.path">
+            <include name="**/*.java" />
+        </javac>
+		<jar destfile="${lib.dir}/client.jar">
+		   <fileset dir="${output.dir.classes}/common" />
+		   <fileset dir="${output.dir.classes}/client" />
+		</jar>
+    </target>
+
+    <!-- =================================================================
+        TARGET CLEAN 
+    =================================================================== -->
+    <target name="clean">
+        <delete file="${lib.dir}/client.jar"/>
+        <delete file="${lib.dir}/server.jar"/>
+        <delete dir="${output.dir.classes}" >
+                <include name="**/*"/>
+                <include name="**/*.class"/>
+        </delete>
+    </target>
+
+    <!-- =================================================================
+        TARGET COMPILE 
+    =================================================================== -->
+
+
+
+    <!-- =================================================================
+        TARGET JAR 
+    =================================================================== -->
+
+    <target name="jar-server" depends="server">
+
+		<copy file="logback.xml" todir="${output.dir.classes}" />
+
+        <jar destfile="${lib.dir}/server.jar" 
+			basedir="${output.dir.classes}">
+			<include name="logback.xml" />
+			<include name="server/*.class" />
+		</jar>
+    </target>
+
+    <target name="jar-client" depends="client">
+	    <jar destfile="${lib.dir}/client.jar"
+			basedir="${output.dir.classes}">
+			<include name="common/*.class" />
+			<include name="client/*.class" />
+		</jar>
+    </target>
+
+
+    <!-- =================================================================
+        RUN 
+    =================================================================== -->
+    <target name="run-server" depends="jar-server">
+		<java classname="server.EchoServer" fork="yes">
+			<classpath>
+				<pathelement path="${classpath}"/>
+				<pathelement location="${lib.dir}/ocsf.jar"/>
+				<pathelement location="${lib.dir}/server.jar"/>
+				<pathelement location="${lib.dir}/logback-classic-1.2.3.jar"/>
+				<pathelement location="${lib.dir}/logback-core-1.2.3.jar"/>
+				<pathelement location="${lib.dir}/slf4j-api-1.7.9.jar"/>
+			</classpath>
+		</java>
+    </target>
+
+    <target name="run-client" depends="jar-client">
+		<java classname="client.ClientConsole" fork="yes">
+			<classpath>
+				<pathelement path="${classpath}"/>
+				<pathelement location="${lib.dir}/ocsf.jar"/>
+				<pathelement location="${lib.dir}/client.jar"/>
+			</classpath>
+			<arg value="${arg}"/>
+		</java>
+    </target>
+    <!-- =================================================================
+        TARGET DOC 
+    =================================================================== -->
+    <target name="doc" depends="jar-server,jar-client">
+            <mkdir dir="${doc.dir}"/>
+            <javadoc packagenames="${build.packages}"
+                     sourcepath="${build.src}"
+                     useexternalfile="yes"
+                     destdir="${doc.dir}"
+                     author="true"
+                     version="true"
+                     windowtitle="${__Name__} API"
+                     doctitle="${__Name__}" >
+                <group title="API" packages="${build.packages}"/>
+
+                <header><![CDATA[
+                    SIMPLECHAT JAVA_DOC 
+                ]]></header>
+                <bottom><![CDATA[
+                    <div align=center> <strong>
+                        <i>Copyright 2022 KGU. All Rights Reserved.<i>
+                    </strong></div>
+                ]]></bottom>
+           </javadoc>
+    </target>
+</project>
