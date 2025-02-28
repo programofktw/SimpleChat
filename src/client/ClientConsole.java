@@ -1,3 +1,5 @@
+package client;
+
 import java.io.*;
 import client.*;
 import common.*;
@@ -11,6 +13,7 @@ public class ClientConsole implements ChatIF{
         try{
             client = new ChatClient(host, port, this);
         }catch(IOException e){
+            System.out.println("host = "+ host+ " port = " + port);
             System.out.println("Error : Can't setup connection! Termination client.");
             System.exit(1);
         }
@@ -26,7 +29,7 @@ public class ClientConsole implements ChatIF{
 
             while(true){
                 message = fromConsole.readLine();
-                clinet.handleMessageFromClientUI(message);
+                client.handleMessageFromClientUI(message);
             }
         } catch(Exception ex){
             System.out.println("Unexpected error while reading form console!");
@@ -43,7 +46,8 @@ public class ClientConsole implements ChatIF{
         int port = 0;
 
         try{
-            host = args[0];
+            host = "localhost";
+            // host = args[0];
         } catch(ArrayIndexOutOfBoundsException e){
             host = "localhost";
         }
