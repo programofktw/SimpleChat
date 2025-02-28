@@ -1,6 +1,6 @@
 package client;
 
-import osrf.client.*;
+import ocsf.client.*;
 import common.*;
 import java.io.*;
 
@@ -17,7 +17,7 @@ public class ChatClient extends AbstractClient
 
     public void handleMessageFromServer(Object msg)
     {
-        clinet.display(msg.toString());
+        clientUI.display(msg.toString());
     }
 
     public void handleMessageFromClientUI(String message)

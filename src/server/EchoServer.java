@@ -1,5 +1,7 @@
+package server;
+
 import java.io.*;
-import osrf.server.*;
+import ocsf.server.*;
 
 public class EchoServer extends AbstractServer
 {
